@@ -16,34 +16,25 @@ build:
       AWS_LC_SYS_CMAKE_BUILDER: ${{ "1" if win else "0" }} # force CMake builder for `aws-lc-sys` native C/C++ code on Windows
       CARGO_PROFILE_RELEASE_LTO: fat
       CARGO_PROFILE_RELEASE_STRIP: symbols
+    interpreter: nu
     content:
+      - let prefix = $env.LIBRARY_PREFIX? | default $env.PREFIX
+      # build main app and generate license data
       - cd crates/rqbit
-      - if: unix
-        then:
-          - cargo auditable install --path=. --root="$PREFIX" --no-track --locked --bins
-          # generate shell completions
-          - if: build_platform == host_platform
-            then:
-              - mkdir -p "$PREFIX"/share/bash-completion/completions "$PREFIX"/share/fish/vendor_completions.d "$PREFIX"/share/zsh/site-functions
-              - '"$PREFIX"/bin/rqbit completions bash > "$PREFIX/share/bash-completion/completions/rqbit"'
-              - '"$PREFIX"/bin/rqbit completions fish > "$PREFIX/share/fish/vendor_completions.d/rqbit.fish"'
-              - '"$PREFIX"/bin/rqbit completions zsh  > "$PREFIX/share/zsh/site-functions/_rqbit"'
-      - if: win
-        then:
-          - cargo auditable install --path=. --root="%LIBRARY_PREFIX%" --no-track --locked --bins
-          # generate shell completions
-          - if: build_platform == host_platform
-            then:
-              - mkdir "%LIBRARY_PREFIX%\share\bash-completion\completions"
-              - mkdir "%LIBRARY_PREFIX%\share\fish\vendor_completions.d"
-              - mkdir "%LIBRARY_PREFIX%\share\zsh\site-functions"
-              - '"%LIBRARY_BIN%"\rqbit.exe completions bash > "%LIBRARY_PREFIX%"\share\bash-completion\completions\rqbit'
-              - '"%LIBRARY_BIN%"\rqbit.exe completions fish > "%LIBRARY_PREFIX%"\share\fish\vendor_completions.d\rqbit.fish'
-              - '"%LIBRARY_BIN%"\rqbit.exe completions zsh  > "%LIBRARY_PREFIX%"\share\zsh\site-functions\_rqbit'
+      - cargo auditable install --path=. --root=($prefix) --no-track --locked --bins
       - cargo-bundle-licenses --format=yaml --output=../../THIRDPARTY.yml
       # bundle licenses from webui assets
       - cd ../../crates/librqbit/webui
-      - pnpm install --ignore-scripts && pnpm-licenses generate-disclaimer --prod --output-file=../../../THIRDPARTY-webui.txt
+      - pnpm install --ignore-scripts
+      - pnpm-licenses generate-disclaimer --prod --output-file=../../../THIRDPARTY-webui.txt
+      # generate shell completions
+      - if: build_platform == host_platform
+        then:
+          - mkdir ($prefix)/share/bash-completion/completions ($prefix)/share/fish/vendor_completions.d ($prefix)/share/zsh/site-functions
+          - let bin = $prefix | path join bin/rqbit
+          - ^$bin completions bash | save ($prefix | path join share/bash-completion/completions/rqbit)
+          - ^$bin completions fish | save ($prefix | path join share/fish/vendor_completions.d/rqbit.fish)
+          - ^$bin completions zsh  | save ($prefix | path join share/zsh/site-functions/_rqbit)
 
 requirements:
   build:
@@ -54,6 +45,7 @@ requirements:
     - cargo-bundle-licenses
     - cmake
     - nodejs
+    - nushell
     - pkg-config
     - pnpm
     - pnpm-licenses
