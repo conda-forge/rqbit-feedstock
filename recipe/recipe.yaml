@@ -1,5 +1,5 @@
 context:
-  version: "9.0.1"
+  version: "9.1.0"
 
 package:
   name: rqbit
@@ -7,10 +7,10 @@ package:
 
 source:
   url: https://github.com/ikatson/rqbit/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: 62a42c56259b737eea6580b63061589dc9940b145c40991cfff83470aa783291
+  sha256: 5bf15132fa6f7395ea94c7428d53070aaf72f2adb9b5387c27ecd496830abfb3
 
 build:
-  number: 2
+  number: 0
   script:
     env:
       AWS_LC_SYS_CMAKE_BUILDER: ${{ "1" if win else "0" }} # force CMake builder for `aws-lc-sys` native C/C++ code on Windows
