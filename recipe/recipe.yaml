@@ -46,7 +46,7 @@ requirements:
     - cmake
     - nodejs
     - nushell
-    - pkg-config
+    - pkgconf
     - pnpm
     - pnpm-licenses
   host:
